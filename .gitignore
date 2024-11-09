@@ -1,0 +1,10 @@
+.git/
+
+.vscode/
+.idea/
+.zod/
+
+build/
+bin/
+obj/
+.next
