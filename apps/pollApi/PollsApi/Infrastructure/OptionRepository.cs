@@ -11,9 +11,16 @@ public class OptionRepository : IOptionRepository
         return Task.FromResult(_options);
     }
 
-    public Task<string> Create(Option entity)
+    public Task<Option> Create(Option entity)
     {
         _options.Add(entity);
-        return Task.FromResult(entity.Id.ToString());
+        return Task.FromResult(entity);
+    }
+
+    public Task<IList<Option>> GroupbyPoll(Guid pollId)
+    {
+        IList<Option> grupedOptions = _options.Where(o => o.PollId == pollId).ToList();
+        return Task.FromResult(grupedOptions); 
+        
     }
 }

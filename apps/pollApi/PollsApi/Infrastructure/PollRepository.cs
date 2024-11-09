@@ -11,9 +11,10 @@ public class PollRepository : IPollRepository
         return Task.FromResult(_polls);
     }
 
-    public  Task<string> Create(Poll entity)
+    public  Task<Poll> Create(Poll entity)
     {
         _polls.Add(entity);
-        return Task.FromResult("Poll created successfully");
+        return Task.FromResult(entity);
     }
+    
 }

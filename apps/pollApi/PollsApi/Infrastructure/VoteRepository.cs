@@ -11,9 +11,9 @@ public class VoteRepository : IVoteRepository
         return Task.FromResult(_votes);
     }
 
-    public Task<string> Create(Vote entity)
+    public Task<Vote> Create(Vote entity)
     {
         _votes.Add(entity);
-        return Task.FromResult(entity.Id.ToString());
+        return Task.FromResult(entity);
     }
 }

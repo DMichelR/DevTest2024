@@ -1,18 +1,35 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using PollsApi.Application.Dtos;
 using PollsApi.Application.Repositories;
+using PollsApi.Application.Responses;
 using PollsApi.Domain.Entities;
 
 namespace PollsApi.Presentation;
 
 [ApiController]
 [Route("/api/v1/polls")]
-public class PollController(IPollRepository pollRepository) : ControllerBase
+public class PollController(
+    IPollRepository pollRepository, 
+    IVoteRepository voteRepository, 
+    IOptionRepository optionRepository
+    ) : ControllerBase
 {
     [HttpGet()]
     public async Task<IResult> GetAllPolls()
     {
-        return Results.Ok(await pollRepository.GetAll());
+        IList<Poll> polls = await pollRepository.GetAll();
+        IList<PollResponse> responses = new List<PollResponse>();
+        foreach (Poll poll in polls)
+        {
+            responses.Add(new PollResponse()
+            {
+                Id = poll.Id,
+                Name = poll.Name,
+                Options = await optionRepository.GroupbyPoll(poll.Id)
+            });
+        }
+        return Results.Ok(responses);
     }
 
     [HttpPost()]
@@ -20,9 +37,30 @@ public class PollController(IPollRepository pollRepository) : ControllerBase
     {
         Poll poll = new()
         {
-            Name = request.Name,
+            Name = request.Name
+            
         };
-        string response = await pollRepository.Create(poll);
+        var created = await pollRepository.Create(poll);
+        List<Option> options = request.Options.Select(o => new Option() { Name = o.Name, PollId = poll.Id }).ToList();
+        options.ForEach(async o => await optionRepository.Create(o));
+        PollResponse response = new()
+        {
+            Id = poll.Id,
+            Name = poll.Name,
+            Options = options
+        };
+        return Results.Ok(response);
+    }
+    
+    [HttpPost("{optionId:guid}/vote")]
+    public async Task<IResult> PostVote(Guid optionId, [FromBody] CreateVoteDto request)
+    {
+        Vote vote = new()
+        {
+            OptionId = optionId,
+            VoterEmail = request.VoterEmail,
+        };
+        var response = await voteRepository.Create(vote);
         return Results.Ok(response);
     }
 }
